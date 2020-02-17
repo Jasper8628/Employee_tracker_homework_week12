@@ -3,8 +3,8 @@ USE employee_tracker_db;
 
 CREATE TABLE employees(
     id INT NOT NULL AUTO_INCREMENT,
-    first_name NOT NULL VARCHAR(30),
-    last_name NOT NULL VARCHAR(30),
+    first_name VARCHAR(30) ,
+    last_name VARCHAR(30),
     role_id INT ,
     FOREIGN KEY(role_id) REFERENCES roles(id),
     manager_id INT ,
@@ -29,8 +29,8 @@ CREATE TABLE department(
 );
 CREATE TABLE managers(
     id INT NOT NULL AUTO_INCREMENT,
-    first_name NOT NULL VARCHAR(30),
-    last_name NOT NULL VARCHAR(30),
+    first_name VARCHAR(30),
+    last_name VARCHAR(30),
     PRIMARY KEY (id)
 
 );
