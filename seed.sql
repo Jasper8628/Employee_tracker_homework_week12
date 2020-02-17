@@ -3,9 +3,9 @@ INSERT INTO department(department_id) VALUES("Legal");
 INSERT INTO department(department_id) VALUES("Engineering");
 INSERT INTO department(department_id) VALUES("Sales");
 INSERT INTO department(department_id) VALUES("Finance");
-INSERT INTO managers(first_name,last_name) VALUES("Ashley Rodriguez");
-INSERT INTO managers(first_name,last_name) VALUES("Dick Dickson");
-INSERT INTO managers(first_name,last_name) VALUES("Jack Asston");
+INSERT INTO managers(first_name,last_name) VALUES("Ashley", "Rodriguez");
+INSERT INTO managers(first_name,last_name) VALUES("Dick", "Dickson");
+INSERT INTO managers(first_name,last_name) VALUES("Jack", "Asston");
 INSERT INTO roles(title,salary,department_id)
 VALUES("Sales Lead",120000,3);
 INSERT INTO roles(title,salary,department_id)
