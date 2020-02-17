@@ -6,10 +6,10 @@ let questionInit = {
     "choices": [
         "View All Minions",
         "View All Minions by Master",
-        "view All Minions by Branding",
+        "view All Minions by Role",
         "Add New Minion",
         "Dispose of Minion",
-        "Minion Re-branding",
+        "Minion Role Change",
         "Minion Ownership Change"
     ]
 };
