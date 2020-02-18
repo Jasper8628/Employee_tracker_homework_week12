@@ -7,7 +7,11 @@ let questionInit = {
         "View All Minions",
         "View All Minions by Master",
         "view All Minions by Role",
+        "view All Minions by Department",
+        "View Budget by Department",
+        "Add New Department",
         "Add New Minion",
+        "Add New Role",
         "Dispose of Minion",
         "Minion Role Change",
         "Minion Ownership Change"

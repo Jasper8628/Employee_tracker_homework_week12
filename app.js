@@ -19,7 +19,7 @@ let minions = [];
 let managers = [];
 let roles = [];
 let queryStr = "SELECT employees.first_name AS e_fn,employees.last_name AS e_ln,roles.title,roles.salary," +
-    "department.department_id,managers.first_name AS m_fn,managers.last_name AS m_ln " +
+    "department.department_name,managers.first_name AS m_fn,managers.last_name AS m_ln " +
     "FROM employees " +
     "INNER JOIN roles " +
     "ON  roles.id = employees.role_id " +
@@ -31,6 +31,22 @@ let queryStr = "SELECT employees.first_name AS e_fn,employees.last_name AS e_ln,
 connection.connect(function (err) {
     if (err) throw err;
 });
+function toContinue() {
+    inquirer.prompt({
+        "type": "list",
+        "name": "continue",
+        "message": "Continue?",
+        "choices": ["yes", "no"]
+    }).then(function (answer) {
+        if (answer.continue == "yes") {
+            start();
+        }
+        else {
+            connection.end();
+        }
+    });
+
+}
 
 function viewAll() {
     connection.query(queryStr, function (err, results) {
@@ -44,27 +60,15 @@ function viewAll() {
             let num = entry.e_fn.split("").length;
             let num2 = entry.e_ln.split("").length;
             let num3 = entry.title.split("").length;
-            let num4 = entry.department_id.split("").length;
+            let num4 = entry.department_name.split("").length;
             console.log(entry.e_fn + " ".repeat(space - num - 10) +
                 entry.e_ln + " ".repeat(space - num2 - 10) +
                 entry.title + " ".repeat(space - num3) +
-                entry.department_id + " ".repeat(space - num4 - 5) + entry.salary + " ".repeat(14) + entry.m_fn + " " + entry.m_ln);
+                entry.department_name + " ".repeat(space - num4 - 5) + entry.salary + " ".repeat(14) + entry.m_fn + " " + entry.m_ln);
 
         }
         console.log("-".repeat(130));
-        inquirer.prompt({
-            "type": "list",
-            "name": "continue",
-            "message": "Continue?",
-            "choices": ["yes", "no"]
-        }).then(function (answer) {
-            if (answer.continue == "yes") {
-                start();
-            }
-            else {
-                connection.end();
-            }
-        });
+        toContinue();
     });
 }
 function viewByMng() {
@@ -85,7 +89,7 @@ function viewByMng() {
             let lastName = fullName[1];
             connection.query(
                 "SELECT employees.first_name AS e_fn,employees.last_name AS e_ln," +
-                "roles.title,roles.salary,department.department_id " +
+                "roles.title,roles.salary,department.department_name " +
                 " FROM employees INNER JOIN managers" +
                 " ON  managers.id = employees.manager_id " +
                 "INNER JOIN roles " +
@@ -103,26 +107,14 @@ function viewByMng() {
                         let num = entry.e_fn.split("").length;
                         let num2 = entry.e_ln.split("").length;
                         let num3 = entry.title.split("").length;
-                        let num4 = entry.department_id.split("").length;
+                        let num4 = entry.department_name.split("").length;
                         console.log(entry.e_fn + " ".repeat(space - num - 10) +
                             entry.e_ln + " ".repeat(space - num2 - 10) +
                             entry.title + " ".repeat(space - num3) +
-                            entry.department_id + " ".repeat(space - num4 - 5) + entry.salary);
+                            entry.department_name + " ".repeat(space - num4 - 5) + entry.salary);
                     }
                     console.log("-".repeat(101));
-                    inquirer.prompt({
-                        "type": "list",
-                        "name": "continue",
-                        "message": "Continue?",
-                        "choices": ["yes", "no"]
-                    }).then(function (answer) {
-                        if (answer.continue == "yes") {
-                            start();
-                        }
-                        else {
-                            connection.end();
-                        }
-                    });
+                    toContinue();
                 });
         });
     });
@@ -143,13 +135,34 @@ function viewByRole() {
         inquirer.prompt(select).then(function (answer) {
             let newTitle = answer.name;
             connection.query(
-                "SELECT employees.first_name,employees.last_name" +
-                " FROM employees INNER JOIN roles" +
-                " ON employees.role_id=roles.id " +
+                "SELECT employees.first_name AS e_fn,employees.last_name AS e_ln," +
+                "roles.title,roles.salary,department.department_name " +
+                " FROM employees INNER JOIN managers" +
+                " ON  managers.id = employees.manager_id " +
+                "INNER JOIN roles " +
+                "ON roles.id = employees.role_id " +
+                "INNER JOIN department " +
+                "ON department.id = roles.department_id " +
                 "WHERE roles.title =?", newTitle, function (err, result) {
                     if (err) throw err;
-                    console.log(result);
-                    start();
+                    console.log("-".repeat(101));
+                    console.log("Role" + " ".repeat(26) + "First Name" + " ".repeat(10) + "Last Name" + " ".repeat(11) +
+                        "Department" + " ".repeat(15) + "Salary");
+                    console.log("-".repeat(101));
+                    for (entry of result) {
+                        let space = 30;
+                        let num = entry.e_fn.split("").length;
+                        let num2 = entry.e_ln.split("").length;
+                        let num3 = entry.title.split("").length;
+                        let num4 = entry.department_name.split("").length;
+                        console.log(
+                            entry.title + " ".repeat(space - num3) +
+                            entry.e_fn + " ".repeat(space - num - 10) +
+                            entry.e_ln + " ".repeat(space - num2 - 10) +
+                            entry.department_name + " ".repeat(space - num4 - 5) + entry.salary);
+                    }
+                    console.log("-".repeat(101));
+                    toContinue();
                 });
         });
     });
@@ -210,7 +223,98 @@ function addNew() {
                 }, function (err, res) {
                     if (err) throw err;
                     console.log("Minions added :" + newFirstName + " " + newLastName);
-                    start();
+                    toContinue();
+                });
+            });
+        });
+    });
+}
+function mngChange() {
+    connection.query("SELECT first_name,last_name FROM employees", function (err, result) {
+        if (err) throw err;
+        let names = [];
+        for (entry of result) {
+            let name = entry.first_name + " " + entry.last_name;
+            names.push(name);
+        }
+        connection.query("SELECT * FROM managers", function (err, roleResult) {
+            if (err) throw err;
+            let managers = [];
+            for (entry of roleResult) {
+                let manager = entry.first_name + " " + entry.last_name;
+                managers.push(manager);
+            }
+            let managerChange = [{
+                "type": "list",
+                "name": "name",
+                "message": "Minion to update: ",
+                "choices": names
+            },
+            {
+                "type": "list",
+                "name": "newMng",
+                "message": "New master: ",
+                "choices": managers
+            }];
+            inquirer.prompt(managerChange).then(function (answers) {
+
+                let newMng = answers.newMng;
+                let num = managers.indexOf(newMng) + 1;
+                let fullName = answers.name.split(" ");
+                let name = fullName[1];
+                connection.query("UPDATE employees SET? WHERE?", [{
+                    manager_id: num
+                }, {
+                    last_name: name
+                }], function (err, results) {
+                    if (err) throw err;
+                    console.log(fullName + "'s master changed to " + newMng);
+                    toContinue();
+                });
+            });
+        });
+    });
+}
+function roleChange() {
+    connection.query("SELECT first_name,last_name FROM employees", function (err, result) {
+        if (err) throw err;
+        let names = [];
+        for (entry of result) {
+            let name = entry.first_name + " " + entry.last_name;
+            names.push(name);
+        }
+        connection.query("SELECT * FROM roles", function (err, roleResult) {
+            if (err) throw err;
+            let roles = [];
+            for (entry of roleResult) {
+                let role = entry.title;
+                roles.push(role);
+            }
+            let roleToChange = [{
+                "type": "list",
+                "name": "name",
+                "message": "Minion to update: ",
+                "choices": names
+            },
+            {
+                "type": "list",
+                "name": "newRole",
+                "message": "New role: ",
+                "choices": roles
+            }];
+            inquirer.prompt(roleToChange).then(function (answers) {
+                let newRole = answers.newRole;
+                let num = roles.indexOf(newRole) + 1;
+                let fullName = answers.name.split(" ");
+                let name = fullName[1];
+                connection.query("UPDATE employees SET? WHERE?", [{
+                    role_id: num
+                }, {
+                    last_name: name
+                }], function (err, results) {
+                    if (err) throw err;
+                    console.log(fullName + "'s role changed to " + newRole);
+                    toContinue();
                 });
             });
         });
@@ -236,7 +340,151 @@ function deleteOne() {
             connection.query("DELETE FROM employees WHERE last_name=?", lastName, function (err, result) {
                 if (err) throw err;
                 console.log("minion disposed of: " + answer.name);
-                start();
+                toContinue();
+            });
+        });
+    });
+}
+function viewByDptm() {
+    connection.query("SELECT * FROM department", function (err, results) {
+        if (err) throw err;
+        let dptms = [];
+        for (entry of results) {
+            let dptm = entry.department_name;
+            dptms.push(dptm);
+        }
+        inquirer.prompt({
+            "type": "list",
+            "name": "dptm",
+            "message": "Department of Choice: ",
+            "choices": dptms
+        }).then(function (answer) {
+            let choice = answer.dptm;
+            console.log(choice);
+            connection.query(
+                "SELECT employees.first_name AS e_fn,employees.last_name AS e_ln," +
+                "roles.title,roles.salary,department.department_name " +
+                " FROM employees INNER JOIN managers" +
+                " ON  managers.id = employees.manager_id " +
+                "INNER JOIN roles " +
+                "ON roles.id = employees.role_id " +
+                "INNER JOIN department " +
+                "ON department.id = roles.department_id " +
+                "WHERE ?", {
+                department_name: choice
+            }, function (err, result) {
+                if (err) throw err;
+                console.log("-".repeat(101));
+                console.log("Department" + " ".repeat(15) + "First Name" + " ".repeat(10) + "Last Name" + " ".repeat(11) + "Role" + " ".repeat(26) +
+                    "Salary");
+                console.log("-".repeat(101));
+                for (entry of result) {
+                    let space = 30;
+                    let num = entry.e_fn.split("").length;
+                    let num2 = entry.e_ln.split("").length;
+                    let num3 = entry.title.split("").length;
+                    let num4 = entry.department_name.split("").length;
+                    console.log(entry.department_name + " ".repeat(space - num4 - 5) + entry.e_fn + " ".repeat(space - num - 10) +
+                        entry.e_ln + " ".repeat(space - num2 - 10) +
+                        entry.title + " ".repeat(space - num3) +
+                        entry.salary);
+                }
+                console.log("-".repeat(101));
+                toContinue();
+            });
+        });
+    });
+}
+function budget() {
+    connection.query("SELECT * FROM department", function (err, results) {
+        if (err) throw err;
+        let dptms = [];
+        for (entry of results) {
+            let dptm = entry.department_name;
+            dptms.push(dptm);
+        }
+        inquirer.prompt({
+            "type": "list",
+            "name": "dptm",
+            "message": "Department of Choice: ",
+            "choices": dptms
+        }).then(function (answer) {
+            let choice = answer.dptm;
+            console.log(choice);
+            connection.query("SELECT salary FROM roles " +
+                "INNER JOIN department ON department.id = roles.department_id " +
+                "INNER JOIN employees ON employees.role_id = roles.id " +
+                "WHERE ?", {
+                department_name: choice
+            }, function (err, result) {
+                if (err) throw err;
+                let sum = 0;
+                for (entry of result) {
+                    sum = sum + entry.salary;
+                }
+                console.log("Total budget for " + choice + "department is: $" + sum);
+                toContinue();
+            });
+        });
+    });
+}
+function addRole() {
+    connection.query("SELECT * FROM department", function (err, result) {
+        if (err) throw err;
+        let dps = [];
+        for (entry of result) {
+            dps.push(entry.department_name);
+        }
+        let roleQuestions = [{
+            "type": "list",
+            "name": "dp",
+            "message": "Department to add role to: ",
+            "choices": dps
+        }, {
+            "type": "input",
+            "name": "name",
+            "message": "Name of the new role: "
+        }, {
+            "type": "input",
+            "name": "salary",
+            "message": "Salary of the new role: "
+        }]
+        inquirer.prompt(roleQuestions).then(function (answers) {
+            let index = dps.indexOf(answers.dp) + 1;
+            let newRole = {
+                department_id: index,
+                title: answers.name,
+                salary: answers.salary
+            };
+            connection.query("INSERT INTO roles SET?", newRole, function (err, res) {
+                if (err) throw err;
+                console.log(answers.name + " added to " + answers.dp);
+                toContinue();
+            });
+        });
+    });
+}
+function newDptm() {
+    inquirer.prompt({
+        "type": "input",
+        "name": "name",
+        "message": "Name a new department: "
+    }).then(function (answer) {
+        connection.query("INSERT INTO department SET?", { department_name: answer.name }, function (err, res) {
+            if (err) throw err;
+            console.log(answer.name + " added.");
+            inquirer.prompt({
+                "type": "list",
+                "name": "addRole",
+                "message": "Add a role?",
+                "choices": ["yes", "no"]
+            }).then(function (answer) {
+                if (answer.addRole == "yes") {
+                    addRole();
+                }
+                else {
+                    toContinue();
+                }
             });
         });
     });
@@ -254,15 +502,29 @@ function start() {
             case "view All Minions by Role":
                 viewByRole();
                 break;
+            case "view All Minions by Department":
+                viewByDptm();
+                break;
+            case "View Budget by Department":
+                budget();
+                break;
             case "Add New Minion":
                 addNew();
+                break;
+            case "Add New Role":
+                addRole();
+                break;
+            case "Add New Department":
+                newDptm();
                 break;
             case "Dispose of Minion":
                 deleteOne();
                 break;
             case "Minion Role Change":
+                roleChange();
                 break;
             case "Minion Ownership Change":
+                mngChange();
                 break;
         }
     });
