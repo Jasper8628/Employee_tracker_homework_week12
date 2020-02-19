@@ -3,9 +3,6 @@ INSERT INTO department(department_id) VALUES("Legal");
 INSERT INTO department(department_id) VALUES("Engineering");
 INSERT INTO department(department_id) VALUES("Sales");
 INSERT INTO department(department_id) VALUES("Finance");
-INSERT INTO managers(first_name,last_name) VALUES("Ashley", "Rodriguez");
-INSERT INTO managers(first_name,last_name) VALUES("Dick", "Dickson");
-INSERT INTO managers(first_name,last_name) VALUES("Jack", "Asston");
 INSERT INTO roles(title,salary,department_id)
 VALUES("Sales Lead",120000,3);
 INSERT INTO roles(title,salary,department_id)
@@ -21,12 +18,16 @@ VALUES("Legal Lead",180000,1);
 INSERT INTO roles(title,salary,department_id)
 VALUES("Lawyer ",150000,1);
 
+INSERT INTO employees(first_name,last_name,role_id,manager)
+VALUES("Dick","Dickson",3,1);
+INSERT INTO employees(first_name,last_name,role_id,manager)
+VALUES("Jack","Asston",6,1);
 INSERT INTO employees(first_name,last_name,role_id,manager_id)
 VALUES("John","Doe",1,2);
 INSERT INTO employees(first_name,last_name,role_id,manager_id)
 VALUES("Mike","Chan",2,2);
-INSERT INTO employees(first_name,last_name,role_id)
-VALUES("Ashley","Rodriguez",1);
+INSERT INTO employees(first_name,last_name,role_id,manager)
+VALUES("Ashley","Rodriguez",1,1);
 INSERT INTO employees(first_name,last_name,role_id,manager_id)
 VALUES("Kevin","Tupik",4,3);
 INSERT INTO employees(first_name,last_name,role_id,manager_id)

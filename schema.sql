@@ -8,7 +8,7 @@ CREATE TABLE employees(
     role_id INT ,
     FOREIGN KEY(role_id) REFERENCES roles(id),
     manager_id INT ,
-    FOREIGN KEY (manager_id) REFERENCES managers(id),
+    manager BOOLEAN,
     PRIMARY KEY(id);
 );
 CREATE TABLE roles(
@@ -18,19 +18,9 @@ CREATE TABLE roles(
     department_id INT ,
     FOREIGN KEY(department_id) REFERENCES department(id),
     PRIMARY KEY(id)
-
-
 );
 CREATE TABLE department(
     id  INT NOT NULL AUTO_INCREMENT,
-    department_id VARCHAR(30),
+    department_name VARCHAR(30),
     PRIMARY KEY(id)
-
-);
-CREATE TABLE managers(
-    id INT NOT NULL AUTO_INCREMENT,
-    first_name VARCHAR(30),
-    last_name VARCHAR(30),
-    PRIMARY KEY (id)
-
 );
