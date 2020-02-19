@@ -394,7 +394,7 @@ function deleteOne() {
                 inquirer.prompt({
                     "type": "list",
                     "name": "sure",
-                    "message": "Are you certain of this action of yours? Severely feelings could potentially be caused, it is strongly urged to think twice and again ",
+                    "message": "Are you certain of this action of yours? Severely hard feelings could potentially be caused, it is strongly urged to think twice and again ",
                     "choices": ["yes", "no"]
                 }).then(function (ans) {
                     if (ans.sure == "yes") {
