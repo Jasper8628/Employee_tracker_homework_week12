@@ -18,13 +18,11 @@ var connection = mysql.createConnection({
 let minions = [];
 let managers = [];
 let roles = [];
-let queryStr = "SELECT employees.first_name AS e_fn,employees.last_name AS e_ln,roles.title,roles.salary," +
-    "department.department_name,managers.first_name AS m_fn,managers.last_name AS m_ln " +
+let queryStr = "SELECT employees.id, employees.first_name AS e_fn,employees.last_name AS e_ln,roles.title,roles.salary,manager_id," +
+    "department.department_name " +
     "FROM employees " +
     "INNER JOIN roles " +
     "ON  roles.id = employees.role_id " +
-    "LEFT JOIN managers " +
-    "ON managers.id = employees.manager_id " +
     "INNER JOIN department " +
     "ON roles.department_id = department.id";
 
@@ -45,9 +43,7 @@ function toContinue() {
             connection.end();
         }
     });
-
 }
-
 function viewAll() {
     connection.query(queryStr, function (err, results) {
         if (err) throw err;
@@ -56,6 +52,13 @@ function viewAll() {
             "Department" + " ".repeat(15) + "Salary" + " ".repeat(14) + "Manager");
         console.log("-".repeat(130));
         for (entry of results) {
+            let index = entry.manager_id;
+            let mngName = " ";
+            for (res of results) {
+                if (res.id == index) {
+                    mngName = res.e_fn + " " + res.e_ln;
+                }
+            }
             let space = 30;
             let num = entry.e_fn.split("").length;
             let num2 = entry.e_ln.split("").length;
@@ -64,20 +67,32 @@ function viewAll() {
             console.log(entry.e_fn + " ".repeat(space - num - 10) +
                 entry.e_ln + " ".repeat(space - num2 - 10) +
                 entry.title + " ".repeat(space - num3) +
-                entry.department_name + " ".repeat(space - num4 - 5) + entry.salary + " ".repeat(14) + entry.m_fn + " " + entry.m_ln);
-
+                entry.department_name + " ".repeat(space - num4 - 5) + entry.salary + " ".repeat(14) + mngName);
         }
         console.log("-".repeat(130));
         toContinue();
     });
 }
 function viewByMng() {
-    connection.query("SELECT * FROM managers", function (err, results) {
+    connection.query("SELECT * FROM employees", function (err, result) {
         if (err) throw err;
-        for (entry of results) {
+        let names = [];
+        let managers = [];
+        for (entry of result) {
             let name = entry.first_name + " " + entry.last_name;
-            managers.push(name);
+            names.push({
+                "id": entry.id,
+                "name": name
+            });
         }
+        result.forEach(employee => {
+            if (employee.manager == 1) {
+                managers.push({
+                    "name": employee.first_name + " " + employee.last_name,
+                    "id": employee.id
+                });
+            }
+        });
         let select = {
             "type": "list",
             "name": "name",
@@ -85,24 +100,29 @@ function viewByMng() {
             "choices": managers
         };
         inquirer.prompt(select).then(function (answer) {
-            let fullName = answer.name.split(" ");
-            let lastName = fullName[1];
+            let newMng = answer.name;
+            let num;
+            managers.forEach(manager => {
+                if (manager.name == newMng) {
+                    num = manager.id;
+                }
+            });
+            console.log(num);
             connection.query(
                 "SELECT employees.first_name AS e_fn,employees.last_name AS e_ln," +
                 "roles.title,roles.salary,department.department_name " +
-                " FROM employees INNER JOIN managers" +
-                " ON  managers.id = employees.manager_id " +
+                " FROM employees " +
                 "INNER JOIN roles " +
                 "ON roles.id = employees.role_id " +
                 "INNER JOIN department " +
                 "ON department.id = roles.department_id " +
-                "WHERE managers.last_name =?", lastName, function (err, result) {
+                "WHERE?", { manager_id: num }, function (err, results) {
                     if (err) throw err;
                     console.log("-".repeat(101));
                     console.log("First Name" + " ".repeat(10) + "Last Name" + " ".repeat(11) + "Role" + " ".repeat(26) +
                         "Department" + " ".repeat(15) + "Salary");
                     console.log("-".repeat(101));
-                    for (entry of result) {
+                    for (entry of results) {
                         let space = 30;
                         let num = entry.e_fn.split("").length;
                         let num2 = entry.e_ln.split("").length;
@@ -137,8 +157,7 @@ function viewByRole() {
             connection.query(
                 "SELECT employees.first_name AS e_fn,employees.last_name AS e_ln," +
                 "roles.title,roles.salary,department.department_name " +
-                " FROM employees INNER JOIN managers" +
-                " ON  managers.id = employees.manager_id " +
+                " FROM employees " +
                 "INNER JOIN roles " +
                 "ON roles.id = employees.role_id " +
                 "INNER JOIN department " +
@@ -175,14 +194,26 @@ function addNew() {
             let title = entry.title;
             roles.push(title);
         };
-        connection.query("SELECT * FROM managers", function (err, newResults) {
+        connection.query("SELECT * FROM employees", function (err, newResults) {
             if (err) throw err;
-            managers = [];
+            let names = [];
+            let managers = [];
             for (entry of newResults) {
-                let title = entry.first_name + " " + entry.last_name;
-                managers.push(title);
-            };
-            console.log(managers);
+                let name = entry.first_name + " " + entry.last_name;
+                names.push({
+                    "id": entry.id,
+                    "name": name
+                });
+            }
+            console.log(names);
+            newResults.forEach(employee => {
+                if (employee.manager == 1) {
+                    managers.push({
+                        "name": employee.first_name + " " + employee.last_name,
+                        "id": employee.id
+                    });
+                }
+            });
             let newMinion = [
                 {
                     "type": "input",
@@ -208,18 +239,23 @@ function addNew() {
                 }
             ];
             inquirer.prompt(newMinion).then(function (answers) {
+                let newMng = answers.manager;
+                let num = 0;
+                managers.forEach(manager => {
+                    if (manager.name == newMng) {
+                        num = manager.id;
+                    }
+                });
                 let newFirstName = answers.firstName;
                 let newLastName = answers.lastName;
                 let role = answers.role;
-                let manager = answers.manager;
                 let index = roles.indexOf(role) + 1;
-                let jndex = managers.indexOf(manager) + 1;
 
                 connection.query("INSERT INTO employees SET?", {
                     first_name: newFirstName,
                     last_name: newLastName,
                     role_id: index,
-                    manager_id: jndex
+                    manager_id: num
                 }, function (err, res) {
                     if (err) throw err;
                     console.log("Minions added :" + newFirstName + " " + newLastName);
@@ -230,49 +266,68 @@ function addNew() {
     });
 }
 function mngChange() {
-    connection.query("SELECT first_name,last_name FROM employees", function (err, result) {
+    connection.query("SELECT * FROM employees", function (err, result) {
         if (err) throw err;
         let names = [];
+        let managers = [];
         for (entry of result) {
             let name = entry.first_name + " " + entry.last_name;
-            names.push(name);
+            names.push({
+                "id": entry.id,
+                "name": name
+            });
         }
-        connection.query("SELECT * FROM managers", function (err, roleResult) {
-            if (err) throw err;
-            let managers = [];
-            for (entry of roleResult) {
-                let manager = entry.first_name + " " + entry.last_name;
-                managers.push(manager);
-            }
-            let managerChange = [{
-                "type": "list",
-                "name": "name",
-                "message": "Minion to update: ",
-                "choices": names
-            },
-            {
-                "type": "list",
-                "name": "newMng",
-                "message": "New master: ",
-                "choices": managers
-            }];
-            inquirer.prompt(managerChange).then(function (answers) {
-
-                let newMng = answers.newMng;
-                let num = managers.indexOf(newMng) + 1;
-                let fullName = answers.name.split(" ");
-                let name = fullName[1];
-                connection.query("UPDATE employees SET? WHERE?", [{
-                    manager_id: num
-                }, {
-                    last_name: name
-                }], function (err, results) {
-                    if (err) throw err;
-                    console.log(fullName + "'s master changed to " + newMng);
-                    toContinue();
+        console.log(names);
+        result.forEach(employee => {
+            if (employee.manager == 1) {
+                managers.push({
+                    "name": employee.first_name + " " + employee.last_name,
+                    "id": employee.id
                 });
+            }
+        });
+        let managerChange = [{
+            "type": "list",
+            "name": "name",
+            "message": "Minion to update: ",
+            "choices": names
+        },
+        {
+            "type": "list",
+            "name": "newMng",
+            "message": "New master: ",
+            "choices": managers
+
+        }];
+        inquirer.prompt(managerChange).then(function (answers) {
+
+            let newMng = answers.newMng;
+            let num;
+            managers.forEach(manager => {
+                if (manager.name == newMng) {
+                    num = manager.id;
+                }
+            });
+            console.log(num);
+            let fullName = answers.name;
+            let index;
+            names.forEach(name => {
+                if (name.name == fullName) {
+                    index = name.id;
+                }
+            });
+            console.log(index);
+            connection.query("UPDATE employees SET? WHERE?", [{
+                manager_id: num
+            }, {
+                id: index
+            }], function (err, results) {
+                if (err) throw err;
+                console.log(fullName + "'s master changed to " + newMng);
+                toContinue();
             });
         });
+
     });
 }
 function roleChange() {
@@ -323,7 +378,7 @@ function roleChange() {
 function deleteOne() {
     connection.query("SELECT * FROM employees", function (err, results) {
         if (err) throw err;
-        minions = [];
+        minions = ["Cancel"];
         for (entry of results) {
             let name = entry.first_name + " " + entry.last_name;
             minions.push(name);
@@ -335,13 +390,30 @@ function deleteOne() {
             "choices": minions
         };
         inquirer.prompt(select).then(function (answer) {
-            let fullName = answer.name.split(" ");
-            let lastName = fullName[1];
-            connection.query("DELETE FROM employees WHERE last_name=?", lastName, function (err, result) {
-                if (err) throw err;
-                console.log("minion disposed of: " + answer.name);
+            if (answer.name != "Cancel") {
+                inquirer.prompt({
+                    "type": "list",
+                    "name": "sure",
+                    "message": "Are you certain of this action of yours? Severely feelings could potentially be caused, it is strongly urged to think twice and again ",
+                    "choices": ["yes", "no"]
+                }).then(function (ans) {
+                    if (ans.sure == "yes") {
+                        let fullName = answer.name.split(" ");
+                        let lastName = fullName[1];
+                        connection.query("DELETE FROM employees WHERE last_name=?", lastName, function (err, result) {
+                            if (err) throw err;
+                            console.log("minion disposed of: " + answer.name);
+                            toContinue();
+                        });
+                    }
+                    else {
+                        deleteOne();
+                    }
+                });
+            }
+            else {
                 toContinue();
-            });
+            }
         });
     });
 }
@@ -364,8 +436,7 @@ function viewByDptm() {
             connection.query(
                 "SELECT employees.first_name AS e_fn,employees.last_name AS e_ln," +
                 "roles.title,roles.salary,department.department_name " +
-                " FROM employees INNER JOIN managers" +
-                " ON  managers.id = employees.manager_id " +
+                " FROM employees " +
                 "INNER JOIN roles " +
                 "ON roles.id = employees.role_id " +
                 "INNER JOIN department " +
