@@ -12,7 +12,7 @@ var connection = mysql.createConnection({
     user: "root",
 
     // Your password
-    password: "Antares28",
+    password: "",
     database: "employee_tracker_db"
 });
 let minions = [];
